@@ -3,6 +3,10 @@
 # Democratic_AI Platform Technical Deep Dive - AI Tool Sharing
 
 ## Chapter 1: Core Philosophy and Technical Background
+<img width="592" height="172" alt="image" src="https://github.com/user-attachments/assets/e5010a59-0862-414a-a25a-d6117d8dd2ab" />
+<img width="620" height="277" alt="スクリーンショット 2025-08-09 084326" src="https://github.com/user-attachments/assets/f78ffcb6-614e-46d0-9d18-80cf000d2035" />
+
+
 
 ### 1.1 Why Democratic_AI is Necessary - Understanding Current Challenges
 
