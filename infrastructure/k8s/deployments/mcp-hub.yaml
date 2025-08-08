@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-hub
+  namespace: democratic-ai
+  labels:
+    app: mcp-hub
+    component: core
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mcp-hub
+  template:
+    metadata:
+      labels:
+        app: mcp-hub
+        component: core
+    spec:
+      containers:
+      - name: mcp-hub
+        image: democratic-ai/mcp-hub:latest
+        ports:
+        - containerPort: 8765
+          name: websocket
+        - containerPort: 50051
+          name: grpc
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: democratic-ai-db-secrets
+              key: registry-host
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: democratic-ai-db-secrets
+              key: db-password
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: democratic-ai-config
+              key: redis-url
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: democratic-ai-secrets
+              key: redis-password
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          tcpSocket:
+            port: 8765
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 8765
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      imagePullSecrets:
+      - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-hub
+  namespace: democratic-ai
+spec:
+  selector:
+    app: mcp-hub
+  ports:
+  - port: 8765
+    targetPort: 8765
+    name: websocket
+  - port: 50051
+    targetPort: 50051
+    name: grpc
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mcp-hub-hpa
+  namespace: democratic-ai
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mcp-hub
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

@@ -1,0 +1,77 @@
+# Core dependencies
+asyncio==3.4.3
+aiohttp==3.9.1
+aiofiles==23.2.1
+websockets==12.0
+grpcio==1.60.0
+grpcio-tools==1.60.0
+protobuf==4.25.1
+
+# Database
+asyncpg==0.29.0
+redis[hiredis]==5.0.1
+motor==3.3.2
+sqlalchemy==2.0.23
+alembic==1.13.0
+
+# Authentication & Security
+pyjwt==2.8.0
+bcrypt==4.1.2
+cryptography==41.0.7
+python-jose[cryptography]==3.3.0
+passlib==1.7.4
+
+# API Framework
+fastapi==0.108.0
+uvicorn[standard]==0.25.0
+python-multipart==0.0.6
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Payment Processing
+stripe==7.9.0
+
+# Monitoring & Logging
+prometheus-client==0.19.0
+opentelemetry-api==1.22.0
+opentelemetry-sdk==1.22.0
+opentelemetry-instrumentation-fastapi==0.43b0
+python-json-logger==2.0.7
+structlog==24.1.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.2
+faker==21.0.0
+factory-boy==3.3.0
+
+# Development tools
+black==23.12.0
+isort==5.13.2
+flake8==6.1.0
+mypy==1.7.1
+pre-commit==3.6.0
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0.1
+click==8.1.7
+rich==13.7.0
+tenacity==8.2.3
+cachetools==5.3.2
+orjson==3.9.10
+
+# Message Queue
+aiokafka==0.10.0
+celery==5.3.4
+kombu==5.3.4
+
+# Data Processing
+numpy==1.26.2
+pandas==2.1.4
+pyarrow==14.0.2
+
+# Rate Limiting
+slowapi==0.1.9

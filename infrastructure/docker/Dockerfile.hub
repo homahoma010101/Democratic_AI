@@ -1,0 +1,33 @@
+# MCP Hub Server Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY core/mcp /app/core/mcp
+COPY proto /app/proto
+
+# Generate Python code from protobuf
+RUN python -m grpc_tools.protoc \
+    -I./proto \
+    --python_out=. \
+    --grpc_python_out=. \
+    proto/mcp_v2.proto
+
+# Expose ports
+EXPOSE 8765 50051
+
+# Run the application
+CMD ["python", "-m", "core.mcp.hub_server"]

@@ -1,0 +1,238 @@
+syntax = "proto3";
+
+package democratic_ai.mcp.v2;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+// MCP (Model Context Protocol) v2.0 - The unified protocol for AI modules
+
+// Message type enumeration
+enum MessageType {
+    MESSAGE_TYPE_UNKNOWN = 0;
+    MESSAGE_TYPE_REQUEST = 1;
+    MESSAGE_TYPE_RESPONSE = 2;
+    MESSAGE_TYPE_EVENT = 3;
+    MESSAGE_TYPE_STREAM_START = 4;
+    MESSAGE_TYPE_STREAM_DATA = 5;
+    MESSAGE_TYPE_STREAM_END = 6;
+    MESSAGE_TYPE_ERROR = 7;
+    MESSAGE_TYPE_HEARTBEAT = 8;
+    MESSAGE_TYPE_CAPABILITY_ANNOUNCE = 9;
+    MESSAGE_TYPE_CAPABILITY_QUERY = 10;
+}
+
+// Protocol for communication
+enum Protocol {
+    PROTOCOL_UNKNOWN = 0;
+    PROTOCOL_WEBSOCKET = 1;
+    PROTOCOL_GRPC = 2;
+    PROTOCOL_HTTP3 = 3;
+}
+
+// Error severity levels
+enum ErrorSeverity {
+    ERROR_SEVERITY_UNKNOWN = 0;
+    ERROR_SEVERITY_INFO = 1;
+    ERROR_SEVERITY_WARNING = 2;
+    ERROR_SEVERITY_ERROR = 3;
+    ERROR_SEVERITY_CRITICAL = 4;
+}
+
+// Main MCP message structure
+message MCPMessage {
+    string id = 1;                     // UUID v4 format unique identifier
+    MessageType type = 2;               // Message type
+    string source_module_id = 3;       // Source module ID
+    string target_module_id = 4;       // Target module ID (empty for broadcast)
+    string action = 5;                  // Action to execute (e.g., "text.summarize")
+    Context context = 6;                // Session info, authentication info, etc.
+    google.protobuf.Any payload = 7;   // Actual data (Any type for flexibility)
+    google.protobuf.Timestamp timestamp = 8;
+    string correlation_id = 9;         // Request-response correlation
+    map<string, string> headers = 10;  // Custom headers
+    int32 priority = 11;                // Priority (0-9, higher is more important)
+    int32 ttl = 12;                     // Time To Live (seconds)
+    Protocol protocol = 13;            // Communication protocol
+}
+
+// Context information for messages
+message Context {
+    string tenant_id = 1;
+    string user_id = 2;
+    string session_id = 3;
+    string trace_id = 4;
+    string span_id = 5;
+    map<string, string> metadata = 6;
+    Authentication auth = 7;
+    RateLimitInfo rate_limit = 8;
+}
+
+// Authentication information
+message Authentication {
+    string type = 1;  // "jwt", "api_key", "oauth2", etc.
+    string token = 2;
+    map<string, string> claims = 3;
+    repeated string permissions = 4;
+    google.protobuf.Timestamp expires_at = 5;
+}
+
+// Rate limiting information
+message RateLimitInfo {
+    int32 limit = 1;
+    int32 remaining = 2;
+    google.protobuf.Timestamp reset_at = 3;
+    string key = 4;
+}
+
+// Module capability definition
+message ModuleCapability {
+    string module_id = 1;
+    string action = 2;
+    string description = 3;
+    InputSchema input_schema = 4;
+    OutputSchema output_schema = 5;
+    repeated string tags = 6;
+    map<string, string> metadata = 7;
+    bool stream_capable = 8;
+    CostInfo cost = 9;
+}
+
+// Input schema definition (JSON Schema format)
+message InputSchema {
+    string schema = 1;  // JSON Schema as string
+    repeated string required = 2;
+    map<string, string> examples = 3;
+}
+
+// Output schema definition (JSON Schema format)
+message OutputSchema {
+    string schema = 1;  // JSON Schema as string
+    map<string, string> examples = 2;
+}
+
+// Cost information for module usage
+message CostInfo {
+    double credits_per_call = 1;
+    double credits_per_second = 2;
+    double credits_per_byte = 3;
+    string currency = 4;
+}
+
+// Module registration request
+message ModuleRegistration {
+    string module_id = 1;
+    string name = 2;
+    string version = 3;
+    string description = 4;
+    repeated ModuleCapability capabilities = 5;
+    map<string, string> metadata = 6;
+    HealthCheck health_check = 7;
+    repeated string protocols = 8;
+}
+
+// Health check configuration
+message HealthCheck {
+    string endpoint = 1;
+    int32 interval_seconds = 2;
+    int32 timeout_seconds = 3;
+    int32 unhealthy_threshold = 4;
+    int32 healthy_threshold = 5;
+}
+
+// Module status
+message ModuleStatus {
+    string module_id = 1;
+    bool online = 2;
+    google.protobuf.Timestamp last_seen = 3;
+    int64 total_requests = 4;
+    int64 total_errors = 5;
+    double average_response_time_ms = 6;
+    map<string, string> metadata = 7;
+}
+
+// Error response
+message ErrorResponse {
+    string code = 1;
+    string message = 2;
+    ErrorSeverity severity = 3;
+    map<string, string> details = 4;
+    string trace_id = 5;
+    google.protobuf.Timestamp timestamp = 6;
+}
+
+// Stream message for streaming responses
+message StreamMessage {
+    string stream_id = 1;
+    int32 sequence = 2;
+    bool is_final = 3;
+    google.protobuf.Any data = 4;
+    double progress = 5;
+    map<string, string> metadata = 6;
+}
+
+// Usage event for tracking
+message UsageEvent {
+    string event_id = 1;
+    string tenant_id = 2;
+    string user_id = 3;
+    string module_id = 4;
+    string action = 5;
+    MetricType metric_type = 6;
+    double value = 7;
+    google.protobuf.Timestamp timestamp = 8;
+    map<string, string> metadata = 9;
+}
+
+// Metric types for usage tracking
+enum MetricType {
+    METRIC_TYPE_UNKNOWN = 0;
+    METRIC_TYPE_API_CALLS = 1;
+    METRIC_TYPE_COMPUTE_TIME = 2;
+    METRIC_TYPE_STORAGE_BYTES = 3;
+    METRIC_TYPE_BANDWIDTH_BYTES = 4;
+    METRIC_TYPE_TOKENS = 5;
+    METRIC_TYPE_CREDITS = 6;
+}
+
+// Service definitions for gRPC
+service MCPHub {
+    // Send a message through the hub
+    rpc SendMessage(MCPMessage) returns (MCPMessage);
+    
+    // Stream messages (bidirectional)
+    rpc StreamMessages(stream MCPMessage) returns (stream MCPMessage);
+    
+    // Register a module
+    rpc RegisterModule(ModuleRegistration) returns (ModuleStatus);
+    
+    // Query module capabilities
+    rpc QueryCapabilities(CapabilityQuery) returns (CapabilityResponse);
+    
+    // Get module status
+    rpc GetModuleStatus(ModuleStatusRequest) returns (ModuleStatus);
+    
+    // Health check
+    rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message CapabilityQuery {
+    string action = 1;
+    repeated string tags = 2;
+    map<string, string> filters = 3;
+}
+
+message CapabilityResponse {
+    repeated ModuleCapability capabilities = 1;
+}
+
+message ModuleStatusRequest {
+    string module_id = 1;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+    bool healthy = 1;
+    map<string, string> details = 2;
+}
